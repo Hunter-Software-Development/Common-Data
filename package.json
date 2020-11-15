@@ -5,7 +5,8 @@
     "main": "app.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "devs": "nodemon app.js"
+        "devs": "nodemon app.js",
+        "devdata": "nodemon get_data.js"
     },
     "author": "Hunter Software Development",
     "license": "All Rights Reserved",
@@ -13,6 +14,7 @@
         "axios": "^0.21.0",
         "body-parser": "^1.19.0",
         "cheerio": "^1.0.0-rc.3",
+        "colors": "^1.4.0",
         "compression": "^1.7.4",
         "cors": "^2.8.5",
         "diff": "^5.0.0",

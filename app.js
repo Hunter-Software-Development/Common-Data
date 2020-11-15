@@ -4,7 +4,6 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
 
 // Local Imports
 const Data = require("./models/data");
@@ -42,18 +41,10 @@ const connectDB = async () => {
 };
 connectDB();
 
-const test = async () => {
-    let continents = await getData.continents();
-    console.log(continents);
 
-    const savedContinents = await Data.findOneAndUpdate({ name: "continents" }, { data: continents }, { upsert: true, new: true });
+getData.test();
 
-    // const savedContinents = new Data({ name: "continents", data: continents });
-    // savedContinents.save();
-    console.log(savedContinents);
-};
 
-test();
 const port = process.env.SERVER_PORT || 8080;
 app.listen(port, () => console.info(`Server listening on port ${port}`));
 
