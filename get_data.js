@@ -1,13 +1,41 @@
 const fetch = require("node-fetch");
 const axios = require("axios");
 const cheerio = require("cheerio");
+require("colors");
+const Diff = require("diff");
 
-exports.continents = async () => {
+const mongoose = require("mongoose");
+mongoose.Promise = global.Promise;
+let dburi = "mongodb://localhost/commondata";
+if (process.env.NODE_ENV === "test") {
+    dburi = dburi + "TEST";
+}
+
+const connectDB = async () => {
+    try {
+        const connection = await mongoose.connect(dburi, {
+            useNewUrlParser: true,
+            useFindAndModify: false,
+            useCreateIndex: true,
+            useUnifiedTopology: true,
+        });
+        console.info(`MongoDB connected: ${connection.connection.name}`);
+    } catch (error) {
+        console.error(`MongoDB error when connecting: ${error}`);
+    }
+};
+connectDB();
+
+const Data = require("./models/data");
+
+let data = {};
+
+data.continents = async () => {
     const { data } = await axios.get("https://datahub.io/core/continent-codes/r/continent-codes.json");
     return data;
 };
 
-exports.countries = async () => {
+data.countries = async () => {
     const url =
         "https://en.wikipedia.org/w/api.php?" +
         new URLSearchParams({
@@ -40,19 +68,18 @@ exports.countries = async () => {
                 let label = labels[i];
                 country[label] = text;
             });
-
             countries.push(country);
         });
 
     return countries;
 };
 
-exports.countries_geojson = async () => {
-    const { data } = await axios.get("https://datahub.io/core/geo-countries/r/0.geojson");
-    return data;
-};
+// data.countries_geojson = async () => {
+//     const { data } = await axios.get("https://datahub.io/core/geo-countries/r/0.geojson");
+//     return data;
+// };
 
-exports.state = async () => {
+data.state = async () => {
     const url =
         "https://en.wikipedia.org/w/api.php?" +
         new URLSearchParams({
@@ -75,7 +102,7 @@ exports.state = async () => {
         .each((i, element) => {
             const $row = $(element);
             const state = {};
-
+            let name;
             if ((name = $row.find("th>a").text().trim())) {
                 state.name = name;
             } else {
@@ -105,7 +132,7 @@ exports.state = async () => {
     return states;
 };
 
-exports.counties = async () => {
+data.counties = async () => {
     const url =
         "https://en.wikipedia.org/w/api.php?" +
         new URLSearchParams({
@@ -153,17 +180,17 @@ exports.counties = async () => {
     return counties;
 };
 
-exports.cities = async () => {
+data.cities = async () => {
     const { data } = await axios.get("https://datahub.io/core/world-cities/r/world-cities.json");
     return data;
 };
 
-exports.airports = async () => {
+data.airports = async () => {
     const { data } = await axios.get("https://datahub.io/core/airport-codes/r/airport-codes.json");
     return data;
 };
 
-exports.presidents = async () => {
+data.presidents = async () => {
     const { data } = await axios.get("https://www.loc.gov/rr/print/list/057_chron.html");
 
     const $ = cheerio.load(data);
@@ -192,7 +219,7 @@ exports.presidents = async () => {
     return presidents;
 };
 
-exports.waffle_houses = async () => {
+data.waffle_houses = async () => {
     const { data } = await axios.get("https://locations.wafflehouse.com/");
 
     const $ = cheerio.load(data);
@@ -205,3 +232,51 @@ exports.waffle_houses = async () => {
 
     return encoded_data;
 };
+
+const upsertAllData = async (data) => {
+    // let continents = await getData.continents();
+    // const savedContinents = await Data.findOneAndUpdate({ name: "continents" }, { data: continents }, { upsert: true, new: true });
+    try {
+        for (key in data) {
+            const dataValue = await data[key]();
+            const storedData = await Data.findOneAndUpdate({ name: key }, { data: dataValue }, { upsert: true, new: true });
+            console.log(storedData);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+const diffAllData = async (data) => {
+    try {
+        let diffObject = {};
+        for (key in data) {
+            diffObject[key] = { good: 0, bad: 0 };
+
+            const dataValue = await data[key]();
+            const storedData = await Data.findOne({ name: key });
+
+            const diff = Diff.diffJson(dataValue, storedData.data);
+
+            diff.forEach((part) => {
+                // green for additions, red for deletions
+                // grey for common parts
+                const color = part.added ? "green" : part.removed ? "red" : "grey";
+                if (part.added || part.removed) {
+                    console.log(part.value[color]);
+                    diffObject[key].bad += JSON.stringify(part).length;
+                } else {
+                    diffObject[key].good += JSON.stringify(part).length;
+                }
+            });
+        }
+        console.log(diffObject);
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+diffAllData(data);
+// upsertAllData(data);
+
+module.exports = data;
