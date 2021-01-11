@@ -5,7 +5,7 @@ require("colors");
  * Functions to handle scraped data + stored data.
  * @todo Flesh out more.  Ensure our admin tools are robust.
  */
-getDataFunctions = {};
+let getDataFunctions = {};
 getDataFunctions.upsertAllData = async (data, Data) => {
     try {
         for (let key in data) {

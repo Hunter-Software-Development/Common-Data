@@ -2,9 +2,6 @@ const fetch = require("node-fetch");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-const Data = require("../models/data");
-
-
 /**
  * Data scraping functions.
  * @todo Stop using both axios and fetch.
