@@ -1,33 +1,16 @@
 const fetch = require("node-fetch");
 const axios = require("axios");
 const cheerio = require("cheerio");
-require("colors");
-const Diff = require("diff");
 
-const mongoose = require("mongoose");
-mongoose.Promise = global.Promise;
-let dburi = "mongodb://localhost/commondata";
-if (process.env.NODE_ENV === "test") {
-    dburi = dburi + "TEST";
-}
+const Data = require("../models/data");
 
-const connectDB = async () => {
-    try {
-        const connection = await mongoose.connect(dburi, {
-            useNewUrlParser: true,
-            useFindAndModify: false,
-            useCreateIndex: true,
-            useUnifiedTopology: true,
-        });
-        console.info(`MongoDB connected: ${connection.connection.name}`);
-    } catch (error) {
-        console.error(`MongoDB error when connecting: ${error}`);
-    }
-};
-connectDB();
 
-const Data = require("./models/data");
-
+/**
+ * Data scraping functions.
+ * @todo Stop using both axios and fetch.
+ * @todo Standardize the data outputs of these functions.  Perhaps we need some method of translating to our desired format automagically.
+ * @todo Look into and attribute licenses appropriately !important
+ */
 let data = {};
 
 data.continents = async () => {
@@ -74,12 +57,15 @@ data.countries = async () => {
     return countries;
 };
 
+/**
+ * @todo Lookinto other options for storage.  Too big for Mongodb.  How should we/should we handle larger datasets? 
+ */
 // data.countries_geojson = async () => {
 //     const { data } = await axios.get("https://datahub.io/core/geo-countries/r/0.geojson");
 //     return data;
 // };
 
-data.state = async () => {
+data.states = async () => {
     const url =
         "https://en.wikipedia.org/w/api.php?" +
         new URLSearchParams({
@@ -226,57 +212,11 @@ data.waffle_houses = async () => {
 
     // TODO: Shouldn't have to do children[0] here, but innerHTML/innerText doesn't seem to work here even though it works in the browser
     const raw_data = $('script[type="application/ld+json"]')[0]
-        .children[0].data.replace(/[\t\n]+/g, " ")
+        .children[0].data.replace(/[\t\n]+/g, "")
         .trim();
     const encoded_data = JSON.parse(raw_data);
 
     return encoded_data;
 };
-
-const upsertAllData = async (data) => {
-    // let continents = await getData.continents();
-    // const savedContinents = await Data.findOneAndUpdate({ name: "continents" }, { data: continents }, { upsert: true, new: true });
-    try {
-        for (key in data) {
-            const dataValue = await data[key]();
-            const storedData = await Data.findOneAndUpdate({ name: key }, { data: dataValue }, { upsert: true, new: true });
-            console.log(storedData);
-        }
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-const diffAllData = async (data) => {
-    try {
-        let diffObject = {};
-        for (key in data) {
-            diffObject[key] = { good: 0, bad: 0 };
-
-            const dataValue = await data[key]();
-            const storedData = await Data.findOne({ name: key });
-
-            const diff = Diff.diffJson(dataValue, storedData.data);
-
-            diff.forEach((part) => {
-                // green for additions, red for deletions
-                // grey for common parts
-                const color = part.added ? "green" : part.removed ? "red" : "grey";
-                if (part.added || part.removed) {
-                    console.log(part.value[color]);
-                    diffObject[key].bad += JSON.stringify(part).length;
-                } else {
-                    diffObject[key].good += JSON.stringify(part).length;
-                }
-            });
-        }
-        console.log(diffObject);
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-diffAllData(data);
-// upsertAllData(data);
 
 module.exports = data;
