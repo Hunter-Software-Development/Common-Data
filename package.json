@@ -4,9 +4,7 @@
     "description": "",
     "main": "app.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "devs": "nodemon app.js",
-        "devdata": "nodemon get_data.js"
+        "devs": "nodemon app.js"
     },
     "author": "Hunter Software Development",
     "license": "All Rights Reserved",
