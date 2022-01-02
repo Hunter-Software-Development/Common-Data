@@ -55,7 +55,7 @@ data.countries = async () => {
 };
 
 /**
- * @todo Lookinto other options for storage.  Too big for Mongodb.  How should we/should we handle larger datasets? 
+ * @todo Lookinto other options for storage.  Too big for Mongodb.  How should we/should we handle larger datasets?
  */
 // data.countries_geojson = async () => {
 //     const { data } = await axios.get("https://datahub.io/core/geo-countries/r/0.geojson");
@@ -202,18 +202,18 @@ data.presidents = async () => {
     return presidents;
 };
 
-data.waffle_houses = async () => {
-    const { data } = await axios.get("https://locations.wafflehouse.com/");
+// data.waffle_houses = async () => {
+//     const { data } = await axios.get("https://locations.wafflehouse.com/");
 
-    const $ = cheerio.load(data);
+//     const $ = cheerio.load(data);
 
-    // TODO: Shouldn't have to do children[0] here, but innerHTML/innerText doesn't seem to work here even though it works in the browser
-    const raw_data = $('script[type="application/ld+json"]')[0]
-        .children[0].data.replace(/[\t\n]+/g, "")
-        .trim();
-    const encoded_data = JSON.parse(raw_data);
+//     // TODO: Shouldn't have to do children[0] here, but innerHTML/innerText doesn't seem to work here even though it works in the browser
+//     const raw_data = $('script[type="application/ld+json"]')[0]
+//         .children[0].data.replace(/[\t\n]+/g, "")
+//         .trim();
+//     const encoded_data = JSON.parse(raw_data);
 
-    return encoded_data;
-};
+//     return encoded_data;
+// };
 
 module.exports = data;

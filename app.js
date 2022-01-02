@@ -29,7 +29,7 @@ app.use(bodyParser.json());
  * @todo Use env for connection strings
  */ 
 mongoose.Promise = global.Promise;
-let dburi = "mongodb://localhost/commondata";
+let dburi = "mongodb://10.0.0.2:27017/commondata";
 if (process.env.NODE_ENV === "test") {
     dburi = dburi + "TEST";
 }
@@ -37,8 +37,6 @@ const connectDB = async () => {
     try {
         const connection = await mongoose.connect(dburi, {
             useNewUrlParser: true,
-            useFindAndModify: false,
-            useCreateIndex: true,
             useUnifiedTopology: true,
         });
         console.info(`MongoDB connected: ${connection.connection.name}`);
